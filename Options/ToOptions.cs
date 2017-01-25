@@ -2,9 +2,9 @@
 
 namespace Spd.Console.Options
 {
-    internal class ToOptions
+    public class ToOptions
     {
         [PositionalArgument(0)]
-        public int ID { get; set; }
+        public string ID { get; set; }
     }
 }

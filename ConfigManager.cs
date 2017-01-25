@@ -31,7 +31,7 @@ namespace Spd.Console
 
             _Config = JsonConvert.DeserializeObject<UserConfiguration>(File.ReadAllText(_Path));
 
-            if (_Config.pc == null || _Config.pe == null)
+            if (_Config.PasswordCipher == null || _Config.PasswordEntropy == null)
                 PasswordNeeded = true;
         }
 
@@ -71,14 +71,14 @@ namespace Spd.Console
                 DataProtectionScope.CurrentUser);
 
 
-            _Config.pe = entropy;
-            _Config.pc = ciphertext;
+            _Config.PasswordEntropy = entropy;
+            _Config.PasswordCipher = ciphertext;
         }
 
 
         private string DecryptPassword()
         {
-            return Encoding.UTF8.GetString(ProtectedData.Unprotect(_Config.pc, _Config.pe, DataProtectionScope.CurrentUser));
+            return Encoding.UTF8.GetString(ProtectedData.Unprotect(_Config.PasswordCipher, _Config.PasswordEntropy, DataProtectionScope.CurrentUser));
         }
 
         private void Save()

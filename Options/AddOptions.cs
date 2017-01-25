@@ -2,7 +2,7 @@
 
 namespace Spd.Console.Options
 {
-    internal class AddOptions
+    public class AddOptions
     {
         [PositionalArgument(0)]
         public string Title { get; set; }

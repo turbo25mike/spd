@@ -74,8 +74,7 @@
     <Compile Include="ConfigManager.cs" />
     <Compile Include="Extensions\SecureStringExt.cs" />
     <Compile Include="Models\UserConfiguration.cs" />
-    <Compile Include="Options\UpdateOptions.cs" />
-    <Compile Include="Options\UpOptions.cs" />
+    <Compile Include="Options\EditOptions.cs" />
     <Compile Include="Options\ToOptions.cs" />
     <Compile Include="ProjectManager.cs" />
     <Compile Include="Models\Project.cs" />

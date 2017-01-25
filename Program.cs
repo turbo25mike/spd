@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Security;
-using System.Threading.Tasks;
 using Spd.Console.Bootstrap;
-using Spd.Console.Extensions;
-using Spd.Console.Models;
 using Spd.Console.Options;
 
 namespace Spd.Console
@@ -19,9 +16,9 @@ namespace Spd.Console
                     Options.Add.Description = "test";
 
                 //foreach (var prop in Options.Add.GetType().GetProperties())
-                 //   Output.WriteLine($"{prop.Name} : {prop.GetValue(Options.Add)}");
+                //   Output.WriteLine($"{prop.Name} : {prop.GetValue(Options.Add)}");
             }
-            
+
             return base.OptionsValid(true, out errorText);
         }
 
@@ -29,26 +26,16 @@ namespace Spd.Console
         {
             try
             {
-                //Options.Up = new UpOptions{ID = 1};
-                Login();
-
-                if(!_configManager.IsLoggedIn)
-                    return;
-                
                 _projectManager = new ProjectManager();
                 if (!IsSpdSolution()) return;
+                //Options.Up = new UpOptions{ID = 1};
 
-                if (Options.Add != null)
-                    _projectManager.Add(Options.Add.Title, _configManager.UserName);
+                Login();
 
-                if (Options.Up != null)
-                    _projectManager.MoveUp(Options.Up.levels);
+                if (!_configManager.IsLoggedIn)
+                    return;
 
-                if(Options.Update != null)
-                    _projectManager.Update(description: Options.Update.Description);
-
-                if (Options.To != null)
-                    _projectManager.MoveTo(Options.To.ID);
+                _projectManager.Run(Options);
 
                 ListCurrentWorkItem();
             }
@@ -73,11 +60,9 @@ namespace Spd.Console
                     Output.WriteLine("Let's take you to www. to sign up.");
                     return;
                 }
-                else
-                {
-                    Output.WriteLine("Enter your username:");
-                    _configManager.SetUsername(System.Console.ReadLine());
-                }
+
+                Output.WriteLine("Enter your username:");
+                _configManager.SetUsername(System.Console.ReadLine());
             }
 
             if (_configManager.PasswordNeeded)
@@ -102,7 +87,7 @@ namespace Spd.Console
                 _configManager.SetPassword(securePwd);
             }
 
-            System.Console.ForegroundColor = ConsoleColor.White;
+            System.Console.ResetColor();// ForegroundColor = ConsoleColor.;
             _configManager.LogIn();
         }
 
@@ -124,23 +109,23 @@ namespace Spd.Console
 
         private void ListCurrentWorkItem()
         {
-            if (!_projectManager.Project.WIS.Any())
+            if (!_projectManager.Project.WorkItems.Any())
                 Output.WriteLine("You have not created any work items.  To do so just type: spd add \"WORK ITEM TITLE\"");
             else if (_projectManager.Project.CurrentWorkItem != null)
             {
                 Output.WriteLine($"Current: {_projectManager.Project.CurrentWorkItem.ID}");
-                Output.WriteLine($" [{_projectManager.Project.CurrentWorkItem.ID}] {_projectManager.Project.CurrentWorkItem.T}");
-                Output.WriteLine($"Description: {_projectManager.Project.CurrentWorkItem.D ?? "none"}");
+                Output.WriteLine($" [{_projectManager.Project.CurrentWorkItem.ID}] {_projectManager.Project.CurrentWorkItem.Title}");
+                Output.WriteLine($"Description: {_projectManager.Project.CurrentWorkItem.Description ?? "none"}");
                 Output.WriteLine("Children:");
-                foreach (var wi in _projectManager.Project.CurrentWorkItem.CHD)
-                    Output.WriteLine($"  - [{wi.ID}] {wi.T}");
+                foreach (var wi in _projectManager.Project.CurrentWorkItem.Children)
+                    Output.WriteLine($"  - [{wi.ID}] {wi.Title}");
             }
             else
             {
                 Output.WriteLine("Current: root");
                 Output.WriteLine("Children:");
-                foreach (var wi in _projectManager.Project.WIS)
-                    Output.WriteLine($"  - [{wi.ID}] {wi.T}");
+                foreach (var wi in _projectManager.Project.WorkItems)
+                    Output.WriteLine($"  - [{wi.ID}] {wi.Title}");
             }
         }
 
