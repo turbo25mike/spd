@@ -1,8 +1,6 @@
 ﻿using System;
 using System.IO;
-using System.Security;
-using System.Security.Cryptography;
-using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Spd.Console.Extensions;
 using Spd.Console.Models;
@@ -11,79 +9,41 @@ namespace Spd.Console
 {
     public class ConfigManager
     {
-        private readonly string _Path;
-        private readonly UserConfiguration _Config;
-
-        public string UserName => _Config.UserName;
-
-        [JsonIgnore]
-        public bool IsLoggedIn { get; set; }
-
-        [JsonIgnore]
-        public bool PasswordNeeded { get; set; }
-        
+        private readonly string _path;
+        public UserConfiguration Config { get; }
 
         public ConfigManager()
         {
-            _Path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\.spd";
-            if (!File.Exists(_Path))
-                File.WriteAllText(_Path, "{}");
+            _path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\.spd";
+            if (!File.Exists(_path))
+                File.WriteAllText(_path, "{}");
 
-            _Config = JsonConvert.DeserializeObject<UserConfiguration>(File.ReadAllText(_Path));
-
-            if (_Config.PasswordCipher == null || _Config.PasswordEntropy == null)
-                PasswordNeeded = true;
+            Config = JsonConvert.DeserializeObject<UserConfiguration>(File.ReadAllText(_path));
         }
 
-        public void LogIn()
+        public async Task LogIn()
         {
-            //TODO send to server to validate
-            //client.Login(_Config.UserName, DecryptPassword());
-            IsLoggedIn = true;
-            PasswordNeeded = false;
-        }
-
-        public void SetUsername(string username)
-        {
-            _Config.UserName = username;
-            Save();
-        }
-
-        public void SetPassword(SecureString password)
-        {
-            StorePassword(password);
-            Save();
-        }
-
-        private void StorePassword(SecureString password)
-        {
-            // Data to protect. Convert a string to a byte[] using Encoding.UTF8.GetBytes().
-            byte[] plaintext = Encoding.UTF8.GetBytes(password.ConvertToUnsecureString());
-
-            // Generate additional entropy (will be used as the Initialization vector)
-            var entropy = new byte[20];
-            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
+            if (DateTime.Now > Config.ExpirationDate)
             {
-                rng.GetBytes(entropy);
+                var userToken = await Auth0.Login(Config.JWT);
+                Config.JWT = userToken.id_token;
+                Config.ExpirationDate = userToken.timeStamp.AddSeconds(userToken.expires_in);
+                Config.UserName = userToken.user_name;
+                Save();
             }
-
-            var ciphertext = ProtectedData.Protect(plaintext, entropy,
-                DataProtectionScope.CurrentUser);
-
-
-            _Config.PasswordEntropy = entropy;
-            _Config.PasswordCipher = ciphertext;
         }
 
-
-        private string DecryptPassword()
+        public void LogOut()
         {
-            return Encoding.UTF8.GetString(ProtectedData.Unprotect(_Config.PasswordCipher, _Config.PasswordEntropy, DataProtectionScope.CurrentUser));
+            Config.JWT = string.Empty;
+            Config.ExpirationDate = DateTime.MinValue;
+            Config.UserName = string.Empty;
+            Save();
         }
 
         private void Save()
         {
-            File.WriteAllText(_Path, JsonConvert.SerializeObject(_Config, new JsonSerializerSettings
+            File.WriteAllText(_path, JsonConvert.SerializeObject(Config, new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore
             }));

@@ -1,16 +1,17 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 
 namespace Spd.Console.Models
 {
     public class UserConfiguration
     {
-        [JsonProperty("u")]
+        [JsonProperty("user")]
         public string UserName { get; set; }
 
-        [JsonProperty("e")]
-        public byte[] PasswordEntropy { get; set; }
+        [JsonProperty("jwt")]
+        public string JWT { get; set; }
 
-        [JsonProperty("c")]
-        public byte[] PasswordCipher { get; set; }
+        [JsonProperty("exp")]
+        public DateTime ExpirationDate { get; set; }
     }
 }

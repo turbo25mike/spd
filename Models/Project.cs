@@ -52,5 +52,27 @@ namespace Spd.Console.Models
         {
             return WorkItems != null && WorkItems.Any();
         }
+
+        public void ListCurrentWorkItem()
+        {
+            if (!WorkItems.Any())
+                System.Console.WriteLine("You have not created any work items.  To do so just type: spd add \"WORK ITEM TITLE\"");
+            else if (CurrentWorkItem != null)
+            {
+                System.Console.WriteLine($"Current: {CurrentWorkItem.ID}");
+                System.Console.WriteLine($" [{CurrentWorkItem.ID}] {CurrentWorkItem.Title}");
+                System.Console.WriteLine($"Description: {CurrentWorkItem.Description ?? "none"}");
+                System.Console.WriteLine("Children:");
+                foreach (var wi in CurrentWorkItem.Children)
+                    System.Console.WriteLine($"  - [{wi.ID}] {wi.Title}");
+            }
+            else
+            {
+                System.Console.WriteLine("Current: root");
+                System.Console.WriteLine("Children:");
+                foreach (var wi in WorkItems)
+                    System.Console.WriteLine($"  - [{wi.ID}] {wi.Title}");
+            }
+        }
     }
 }

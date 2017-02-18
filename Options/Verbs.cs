@@ -10,5 +10,9 @@ namespace Spd.Console.Options
         public ToOptions To { get; set; }
         [Verb]
         public EditOptions Edit { get; set; }
+        [Verb]
+        public LogOutOptions LogOut { get; set; }
+        [Verb]
+        public DevOptions Dev { get; set; }
     }
 }

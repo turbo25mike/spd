@@ -4,7 +4,7 @@ using System.Security;
 
 namespace Spd.Console.Extensions
 {
-    public static class SecureStringExt
+    public static class StringExt
     {
         public static string ConvertToUnsecureString(this SecureString securePassword)
         {
@@ -37,6 +37,12 @@ namespace Spd.Console.Extensions
 
             securePassword.MakeReadOnly();
             return securePassword;
+        }
+
+        public static string ToBase64UrlEncoding(this byte[] bytes)
+        {
+            var padding = new[] { '=' };
+            return Convert.ToBase64String(bytes).TrimEnd(padding).Replace('+', '-').Replace('/', '_').Replace("=", "");
         }
     }
 }

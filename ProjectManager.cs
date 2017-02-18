@@ -1,41 +1,67 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using Newtonsoft.Json;
 using Spd.Console.Models;
 using System.Linq;
+using System.Threading.Tasks;
+using Spd.Console.Extensions;
 using Spd.Console.Options;
 
 namespace Spd.Console
 {
     public class ProjectManager
     {
+        public ProjectManager()
+        {
+            _configManager = new ConfigManager();
+        }
+
         private string _Path = ".spd";
         public bool IsInitialized => File.Exists(_Path);
 
-        private Project _Project;
+        private Project _project;
+        private readonly ConfigManager _configManager;
 
         public Project Project
         {
             get
             {
-                if (_Project == null && IsInitialized)
-                    _Project = JsonConvert.DeserializeObject<Project>(File.ReadAllText(_Path));
-                return _Project;
+                if (_project == null && IsInitialized)
+                    _project = JsonConvert.DeserializeObject<Project>(File.ReadAllText(_Path));
+                return _project;
             }
         }
 
         public void Run(Verbs opts)
         {
+            //Options.Up = new UpOptions{ID = 1};
+            _configManager.LogIn().Wait();
+
+            if (!IsSpdSolution()) return;
             if (opts == null) return;
+            LogOut(opts.LogOut);
             Add(opts.Add);
             Edit(opts.Edit);
             MoveTo(opts.To);
+            Dev(opts.Dev).Wait();
+            //Project.ListCurrentWorkItem();
         }
 
         public void Init()
         {
             if (!File.Exists(_Path))
                 File.WriteAllText(_Path, "{}");
+        }
+
+        private bool IsSpdSolution()
+        {
+            if (IsInitialized) return true;
+
+            System.Console.WriteLine("This is not a spd project. Would you like to make it one? Y/N");
+            var response = System.Console.ReadLine();
+            if (response?.ToLower() != "yes" && response?.ToLower() != "y")
+                return false;
+            Init();
+            return true;
         }
 
         private void Add(AddOptions opts)
@@ -107,9 +133,36 @@ namespace Spd.Console
             Save();
         }
 
+        private void LogOut(LogOutOptions opts)
+        {
+            if (opts == null) return;
+            _configManager.LogOut();
+            System.Console.WriteLine("You are now logged out.");
+        }
+
+        private async Task Dev(DevOptions opts)
+        {
+            if (opts == null) return;
+            if (opts.Environment)
+            {
+                var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status/environment");
+                System.Console.WriteLine(env);
+            }
+            if (opts.Authorized)
+            {
+                var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status/secure", token : _configManager.Config.JWT);
+                System.Console.WriteLine(env);
+            }
+            if (opts.Status)
+            {
+                var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status");
+                System.Console.WriteLine(env);
+            }
+        }
+
         private void Save()
         {
-            File.WriteAllText(_Path, JsonConvert.SerializeObject(_Project, new JsonSerializerSettings
+            File.WriteAllText(_Path, JsonConvert.SerializeObject(_project, new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore
             }));
