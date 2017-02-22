@@ -158,6 +158,11 @@ namespace Spd.Console
                 var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status");
                 System.Console.WriteLine(env);
             }
+            if (opts.DBStatus)
+            {
+                var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status/db");
+                System.Console.WriteLine(env);
+            }
         }
 
         private void Save()
