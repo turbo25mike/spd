@@ -13,5 +13,8 @@ namespace Spd.Console.Models
 
         [JsonProperty("exp")]
         public DateTime ExpirationDate { get; set; }
+
+        [JsonProperty("api")]
+        public string ApiUri { get; set; }
     }
 }

@@ -2,17 +2,15 @@
 using Newtonsoft.Json;
 using Spd.Console.Models;
 using System.Linq;
-using System.Threading.Tasks;
-using Spd.Console.Extensions;
 using Spd.Console.Options;
 
 namespace Spd.Console
 {
     public class ProjectManager
     {
-        public ProjectManager()
+        public ProjectManager(ConfigManager configManager)
         {
-            _configManager = new ConfigManager();
+            _configManager = configManager;
         }
 
         private string _Path = ".spd";
@@ -33,16 +31,12 @@ namespace Spd.Console
 
         public void Run(Verbs opts)
         {
-            //Options.Up = new UpOptions{ID = 1};
-            _configManager.LogIn().Wait();
 
             if (!IsSpdSolution()) return;
-            if (opts == null) return;
-            LogOut(opts.LogOut);
             Add(opts.Add);
             Edit(opts.Edit);
             MoveTo(opts.To);
-            Dev(opts.Dev).Wait();
+            
             //Project.ListCurrentWorkItem();
         }
 
@@ -132,39 +126,7 @@ namespace Spd.Console
 
             Save();
         }
-
-        private void LogOut(LogOutOptions opts)
-        {
-            if (opts == null) return;
-            _configManager.LogOut();
-            System.Console.WriteLine("You are now logged out.");
-        }
-
-        private async Task Dev(DevOptions opts)
-        {
-            if (opts == null) return;
-            if (opts.Environment)
-            {
-                var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status/environment");
-                System.Console.WriteLine(env);
-            }
-            if (opts.Authorized)
-            {
-                var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status/secure", token : _configManager.Config.JWT);
-                System.Console.WriteLine(env);
-            }
-            if (opts.Status)
-            {
-                var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status");
-                System.Console.WriteLine(env);
-            }
-            if (opts.DBStatus)
-            {
-                var env = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/status/db");
-                System.Console.WriteLine(env);
-            }
-        }
-
+        
         private void Save()
         {
             File.WriteAllText(_Path, JsonConvert.SerializeObject(_project, new JsonSerializerSettings

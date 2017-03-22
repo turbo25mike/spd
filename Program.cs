@@ -24,7 +24,23 @@ namespace Spd.Console
         {
             try
             {
-                new ProjectManager().Run(Options);
+                var configManager = new ConfigManager();
+                if (Options == null) return;
+
+                if (Options.Logout)
+                {
+                    configManager.LogOut();
+                    return;
+                }
+
+                if (Options.Dev != null)
+                {
+                    Options.Dev?.Run(configManager).Wait();
+                    return;
+                }
+
+                configManager.LogIn().Wait();
+                new ProjectManager(configManager).Run(Options);
             }
             catch (Exception ex)
             {

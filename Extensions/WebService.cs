@@ -21,7 +21,7 @@ namespace Spd.Console.Extensions
                 request.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             if (content != null)
-             jsonContent = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
+                jsonContent = new StringContent(JsonConvert.SerializeObject(content), Encoding.UTF8, "application/json");
 
             HttpResponseMessage response = null;
             switch (type)
@@ -34,10 +34,15 @@ namespace Spd.Console.Extensions
                     break;
             }
 
-            if (response == null || !response.IsSuccessStatusCode)
-                throw new ArgumentException("Service returned an error.");
+            if (response == null)
+                throw new ArgumentException("Service Error: response was null");
+            if (!response.IsSuccessStatusCode)
+                throw new ArgumentException($"Service Error: {response.ReasonPhrase}");
+
             var result = await response.Content.ReadAsStringAsync();
-            return (typeof(T) == typeof(string)) ? (T)(object)result : JsonConvert.DeserializeObject<T>(result);
+            if (String.IsNullOrEmpty(result))
+                return default(T);
+            return typeof(T) == typeof(string) ? (T)(object)result : JsonConvert.DeserializeObject<T>(result);
         }
     }
 }

@@ -91,7 +91,6 @@
     <Compile Include="Models\Enums.cs" />
     <Compile Include="Models\UserConfiguration.cs" />
     <Compile Include="Options\EditOptions.cs" />
-    <Compile Include="Options\LogOutOptions.cs" />
     <Compile Include="Options\DevOptions.cs" />
     <Compile Include="Options\ToOptions.cs" />
     <Compile Include="ProjectManager.cs" />

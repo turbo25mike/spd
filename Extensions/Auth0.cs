@@ -12,25 +12,31 @@ namespace Spd.Console.Extensions
     {
         public static async Task<Auth0Token> Login(string jwt)
         {
-            Init();
-            System.Console.Clear();
             var spinner = new Animations.Spinner(0, 0) { Message = "Please login." };
             spinner.Start();
+            try
+            {
+                Init();
+                System.Console.Clear();
 
-            var code = await GetCode(_state);
-
-            spinner.Message = "Validating, please wait...";
-
-            var content = new Auth0Verification(code, _verifier);
-            var uri = $"{Constants.Auth0_Domain}oauth/token";
-            var token = await WebService.Request<Auth0Token>(RequestType.Post, uri, content);
-
-
-            var user = await WebService.Request<Auth0User>(RequestType.Get, $"{Constants.Auth0_Domain}userinfo", token : token.access_token);
-            token.user_name = user.nickname;
-            spinner.Stop();
-            System.Console.WriteLine($"Welcome {token.user_name}!");
-            return token;
+                var code = await GetCode(_state);
+                var auth0verification = new Auth0Verification(code, _verifier);
+                var auth0token = await WebService.Request<Auth0Token>(RequestType.Post, $"{Constants.Auth0_Domain}oauth/token", auth0verification);
+                var auth0user = await WebService.Request<Auth0User>(RequestType.Get, $"{Constants.Auth0_Domain}userinfo", token: auth0token.access_token);
+                var response = await WebService.Request<string>(RequestType.Post, $"{Constants.API_Uri}/member", auth0user, auth0token.id_token);
+                System.Console.WriteLine(response);
+                auth0token.user_name = auth0user.nickname;
+                return auth0token;
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"Failed to login: {ex}");
+                return null;
+            }
+            finally
+            {
+                spinner.Stop();
+            }
         }
 
         private static void Init()

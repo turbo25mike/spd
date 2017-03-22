@@ -19,6 +19,9 @@ namespace Spd.Console
                 File.WriteAllText(_path, "{}");
 
             Config = JsonConvert.DeserializeObject<UserConfiguration>(File.ReadAllText(_path));
+
+            if (!string.IsNullOrEmpty(Config.ApiUri))
+                Constants.API_Uri = Config.ApiUri;
         }
 
         public async Task LogIn()
@@ -27,7 +30,7 @@ namespace Spd.Console
             {
                 var userToken = await Auth0.Login(Config.JWT);
                 Config.JWT = userToken.id_token;
-                Config.ExpirationDate = userToken.timeStamp.AddSeconds(userToken.expires_in);
+                Config.ExpirationDate = userToken.timeStamp.AddMilliseconds(userToken.expires_in);
                 Config.UserName = userToken.user_name;
                 Save();
             }
@@ -39,6 +42,7 @@ namespace Spd.Console
             Config.ExpirationDate = DateTime.MinValue;
             Config.UserName = string.Empty;
             Save();
+            System.Console.WriteLine("You are now logged out.");
         }
 
         private void Save()
@@ -47,6 +51,13 @@ namespace Spd.Console
             {
                 NullValueHandling = NullValueHandling.Ignore
             }));
+        }
+
+        public void SetLocalApiUri(string uri = "")
+        {
+            Config.ApiUri = uri;
+            Constants.API_Uri = uri;
+            Save();
         }
     }
 }
