@@ -2,9 +2,9 @@
 
 namespace Spd.Console.Models
 {
-    public class Auth0Verification
+    public class AuthVerification
     {
-        public Auth0Verification(string code, string verifier)
+        public AuthVerification(string code, string verifier)
         {
             this.code = code;
             code_verifier = verifier;
@@ -20,9 +20,9 @@ namespace Spd.Console.Models
         public string redirect_uri { get; private set; }
     }
 
-    public class Auth0Token
+    public class AuthToken
     {
-        public Auth0Token()
+        public AuthToken()
         {
             timeStamp = DateTime.Now;
         }
@@ -35,7 +35,7 @@ namespace Spd.Console.Models
         public string user_name { get; set; }
     }
 
-    public class Auth0User
+    public class AuthUser
     {
         public bool email_verified { get; set; }
         public string email { get; set; }
@@ -45,12 +45,12 @@ namespace Spd.Console.Models
         public string picture { get; set; }
         public string user_id { get; set; }
         public string nickname { get; set; }
-        public Auth0Identities[] identities { get; set; }
+        public AuthIdentities[] identities { get; set; }
         public DateTime created_at { get; set; }
         public string sub { get; set; }
     }
 
-    public class Auth0Identities
+    public class AuthIdentities
     {
         public string user_id { get; set; }
         public string provider { get; set; }

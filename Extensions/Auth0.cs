@@ -8,9 +8,18 @@ using Spd.Console.Models;
 
 namespace Spd.Console.Extensions
 {
-    public class Auth0
+    public interface IAuth {
+        Task<AuthToken> Login(string jwt);
+    }
+
+    public class Auth0 : IAuth
     {
-        public static async Task<Auth0Token> Login(string jwt)
+        public Auth0(IWebService service = null)
+        {
+            _webservice = service ?? new WebService();
+        }
+
+        public async Task<AuthToken> Login(string jwt)
         {
             var spinner = new Animations.Spinner(0, 0) { Message = "Please login." };
             spinner.Start();
@@ -20,13 +29,13 @@ namespace Spd.Console.Extensions
                 System.Console.Clear();
 
                 var code = await GetCode(_state);
-                var auth0verification = new Auth0Verification(code, _verifier);
-                var auth0token = await WebService.Request<Auth0Token>(RequestType.Post, $"{Constants.Auth0_Domain}oauth/token", auth0verification);
-                var auth0user = await WebService.Request<Auth0User>(RequestType.Get, $"{Constants.Auth0_Domain}userinfo", token: auth0token.access_token);
-                var response = await WebService.Request<string>(RequestType.Post, $"{Constants.API_Uri}/member", auth0user, auth0token.id_token);
+                var authVerification = new AuthVerification(code, _verifier);
+                var token = await _webservice.Request<AuthToken>(RequestType.Post, $"{Constants.Auth0_Domain}oauth/token", authVerification);
+                var authUser = await _webservice.Request<AuthUser>(RequestType.Get, $"{Constants.Auth0_Domain}userinfo", token: token.access_token);
+                var response = await _webservice.Request<string>(RequestType.Post, $"{Constants.API_Uri}/member", authUser, token.id_token);
                 System.Console.WriteLine(response);
-                auth0token.user_name = auth0user.nickname;
-                return auth0token;
+                token.user_name = authUser.nickname;
+                return token;
             }
             catch (Exception ex)
             {
@@ -39,7 +48,7 @@ namespace Spd.Console.Extensions
             }
         }
 
-        private static void Init()
+        private void Init()
         {
             var random = new Random();
 
@@ -48,12 +57,12 @@ namespace Spd.Console.Extensions
             var state = new byte[32];
             random.NextBytes(state);
 
-            _state = state.ToBase64UrlEncoding();
-            _verifier = verifier.ToBase64UrlEncoding();
-            _challenge = Sha256(_verifier).ToBase64UrlEncoding();
+            _state = ToBase64UrlEncoding(state);
+            _verifier = ToBase64UrlEncoding(verifier);
+            _challenge = ToBase64UrlEncoding(Sha256(_verifier));
         }
 
-        private static async Task<string> GetCode(string state)
+        private async Task<string> GetCode(string state)
         {
             var url = $"{Constants.Auth0_Domain}authorize?response_type=code&scope=openid&client_id={Constants.Auth0_ClientID}&redirect_uri={Constants.API_Uri}/auth&code_challenge={_challenge}&code_challenge_method=S256&state={_state}";
             var process = Process.Start("IEXPLORE.EXE", "-nomerge " + url);
@@ -63,7 +72,7 @@ namespace Spd.Console.Extensions
             {
                 Thread.Sleep(5000); //trying again in 5 seconds.
 
-                results = await WebService.Request<string>(RequestType.Get, $"{Constants.API_Uri}/auth/{state}/code");
+                results = await _webservice.Request<string>(RequestType.Get, $"{Constants.API_Uri}/auth/{state}/code");
                 if (!string.IsNullOrEmpty(results)) break;
             }
 
@@ -74,14 +83,21 @@ namespace Spd.Console.Extensions
             return results;
         }
 
-        private static byte[] Sha256(string password)
+        private byte[] Sha256(string password)
         {
             var crypt = new SHA256Managed();
             return crypt.ComputeHash(Encoding.UTF8.GetBytes(password), 0, Encoding.UTF8.GetByteCount(password));
         }
 
+        public string ToBase64UrlEncoding(byte[] bytes)
+        {
+            var padding = new[] { '=' };
+            return Convert.ToBase64String(bytes).TrimEnd(padding).Replace('+', '-').Replace('/', '_').Replace("=", "");
+        }
+
         private static string _state;
         private static string _verifier;
         private static string _challenge;
+        private readonly IWebService _webservice;
     }
 }

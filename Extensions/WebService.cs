@@ -8,9 +8,13 @@ using Spd.Console.Models;
 
 namespace Spd.Console.Extensions
 {
-    public class WebService
+    public interface IWebService {
+        Task<T> Request<T>(RequestType type, string uri, object content = null, string token = "");
+    }
+
+    public class WebService : IWebService
     {
-        public static async Task<T> Request<T>(RequestType type, string uri, object content = null, string token = "")
+        public async Task<T> Request<T>(RequestType type, string uri, object content = null, string token = "")
         {
             StringContent jsonContent = null;
             var request = new HttpClient();
@@ -32,6 +36,14 @@ namespace Spd.Console.Extensions
                 case RequestType.Post:
                     response = await request.PostAsync(uri, jsonContent);
                     break;
+                case RequestType.Put:
+                    response = await request.PutAsync(uri, jsonContent);
+                    break;
+                case RequestType.Delete:
+                    response = await request.DeleteAsync(uri);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
 
             if (response == null)
@@ -40,7 +52,7 @@ namespace Spd.Console.Extensions
                 throw new ArgumentException($"Service Error: {response.ReasonPhrase}");
 
             var result = await response.Content.ReadAsStringAsync();
-            if (String.IsNullOrEmpty(result))
+            if (string.IsNullOrEmpty(result))
                 return default(T);
             return typeof(T) == typeof(string) ? (T)(object)result : JsonConvert.DeserializeObject<T>(result);
         }

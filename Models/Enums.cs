@@ -1,4 +1,4 @@
 ﻿namespace Spd.Console.Models
 {
-    public enum RequestType { Get, Post }
+    public enum RequestType { Get, Post, Put, Delete }
 }

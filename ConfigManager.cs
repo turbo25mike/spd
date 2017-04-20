@@ -10,10 +10,12 @@ namespace Spd.Console
     public class ConfigManager
     {
         private readonly string _path;
+        private readonly IAuth _auth;
         public UserConfiguration Config { get; }
 
-        public ConfigManager()
+        public ConfigManager(IAuth auth0 = null)
         {
+            _auth = auth0 ?? new Auth0();
             _path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\.spd";
             if (!File.Exists(_path))
                 File.WriteAllText(_path, "{}");
@@ -28,7 +30,7 @@ namespace Spd.Console
         {
             if (DateTime.Now > Config.ExpirationDate)
             {
-                var userToken = await Auth0.Login(Config.JWT);
+                var userToken = await _auth.Login(Config.JWT);
                 Config.JWT = userToken.id_token;
                 Config.ExpirationDate = userToken.timeStamp.AddMilliseconds(userToken.expires_in);
                 Config.UserName = userToken.user_name;

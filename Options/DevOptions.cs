@@ -8,6 +8,12 @@ namespace Spd.Console.Options
 {
     public class DevOptions
     {
+        private IWebService _webservice;
+
+        public DevOptions(IWebService service = null)
+        {
+            _webservice = service ?? new WebService();
+        }
 
         [NamedArgument('p', "path", Action = ParseAction.Store, Description = "API unauthorized test", Required = false)]
         public string Path { get; set; }
@@ -36,7 +42,7 @@ namespace Spd.Console.Options
                 System.Console.WriteLine($"Requesting: {path}");
                 try
                 {
-                    var env = await WebService.Request<string>(RequestType.Get, path);
+                    var env = await _webservice.Request<string>(RequestType.Get, path);
                     System.Console.WriteLine($"Server reponse: {env}");
                 }
                 catch (Exception ex)
@@ -52,7 +58,7 @@ namespace Spd.Console.Options
                 System.Console.WriteLine($"Requesting: {path}");
                 try
                 {
-                    var env = await WebService.Request<string>(RequestType.Get, path, token: configManager.Config.JWT);
+                    var env = await _webservice.Request<string>(RequestType.Get, path, token: configManager.Config.JWT);
                     System.Console.WriteLine($"Server reponse: {env}");
                 }
                 catch (Exception ex)
